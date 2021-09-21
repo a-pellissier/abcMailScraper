@@ -34,10 +34,8 @@ def EmailGetterSaver():
             listOfTeams = glob.glob(os.path.join(attachmentsDir, "*"))
             try:    
                 latestTeam = os.path.basename(max(listOfTeams, key=os.path.getmtime))
-                #print(latestTeam)
             except Exception as e:
                 latestTeam = "team0"
-                #print(latestTeam)
 
             try:
                 s = message.subject
@@ -87,6 +85,7 @@ def messagesListParser(messages_list):
     candidates_wb = openpyxl.load_workbook(path)
     sheet = candidates_wb.active
 
+    # Parse each message for team info
     for i, message in enumerate(messages_list):    
         team = message["team"]
         #print(team)
