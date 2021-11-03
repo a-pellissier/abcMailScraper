@@ -86,7 +86,7 @@ def EmailGetterSaver():
 
 def messagesListParser(messages_list):
     # Check if candidates list excel exists, creating it if not
-    path = os.path.join(os.getcwd(), "candidates.xlsx")
+    path = os.path.join(os.getcwd(), EXCEL_NAME)
     if not os.path.exists(path):
         print(Fore.GREEN + "\nCandidates excel doesn't exist, creating it")
         workbook = openpyxl.Workbook()
