@@ -11,13 +11,25 @@ colorama.init(autoreset=True)
 
 SAVE_DIR = os.path.join(os.getcwd(), "teams")
 EXCEL_NAME = "candidates.xlsx"
+STANDARD_EMAIL_SENDER_ADDRESS = "julien.foucault@accuracy.com"
 
 def EmailGetterSaver():
     outlook = win32com.client.Dispatch('outlook.application')
     mapi = outlook.GetNamespace("MAPI")
 
-    inbox = mapi.GetDefaultFolder(6).Folders["ABC"]
-    messages = inbox.Items
+    # Connecting to the right inbox
+    inbox = mapi.Folders("Accuracy Business Cup").Folders("Inbox").Folders("ABC 2021").Folders("03. Candidatures")
+
+    # Building the message list of all messages sent by the applying server
+    standardMessages = []
+    for message in inbox.Items:
+        if message.Class == 43:
+            if message.SenderEmailType == 'EX':
+                if STANDARD_EMAIL_SENDER_ADDRESS == message.Sender.GetExchangeUser().PrimarySmtpAddress:
+                    standardMessages.append(message)
+            else:
+                if STANDARD_EMAIL_SENDER_ADDRESS == message.SenderEmailAddress:
+                    standardMessages.append(message)
 
     # Save attachments and create team folders
     ## Create the teams directory if not already there
@@ -29,7 +41,7 @@ def EmailGetterSaver():
     ## Iterate over the messages
     messages_list = []
     try:
-        for message in list(messages):
+        for message in list(standardMessages):
             # Get the latest team folder name
             listOfTeams = glob.glob(os.path.join(attachmentsDir, "*"))
             try:    
@@ -78,7 +90,7 @@ def messagesListParser(messages_list):
     if not os.path.exists(path):
         print(Fore.GREEN + "\nCandidates excel doesn't exist, creating it")
         workbook = openpyxl.Workbook()
-        headers = ("Team", "First Name", "Last Name", "email", "School")
+        headers = ("Team", "First Name", "Last Name", "email", "School", "Email Sent?")
         sheet = workbook.active
         sheet.append(headers)
         workbook.save(filename=EXCEL_NAME)
@@ -116,7 +128,7 @@ def messagesListParser(messages_list):
             #print(school, " ", len(school))
 
             # Append data to excel
-            candidateData = (team, firstName, lastName, email, school)
+            candidateData = (team, firstName, lastName, email, school, 0)
             sheet.append(candidateData)
     candidates_wb.save(EXCEL_NAME)
     return None
