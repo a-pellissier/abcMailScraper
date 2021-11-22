@@ -11,14 +11,14 @@ colorama.init(autoreset=True)
 
 SAVE_DIR = os.path.join(os.getcwd(), "teams")
 EXCEL_NAME = "candidates.xlsx"
-STANDARD_EMAIL_SENDER_ADDRESS = "julien.foucault@accuracy.com"
+STANDARD_EMAIL_SENDER_ADDRESS = "srv_website@accuracy.com"
 
 def EmailGetterSaver():
     outlook = win32com.client.Dispatch('outlook.application')
     mapi = outlook.GetNamespace("MAPI")
 
     # Connecting to the right inbox
-    inbox = mapi.Folders("Accuracy Business Cup").Folders("Inbox").Folders("ABC 2021").Folders("03. Candidatures")
+    inbox = mapi.Folders("Accuracy Business Cup France").Folders("Inbox")
 
     # Building the message list of all messages sent by the applying server
     standardMessages = []
@@ -50,7 +50,7 @@ def EmailGetterSaver():
                 latestTeam = "team0"
 
             try:
-                s = message.subject
+                s = message.subject.lower()
                 teamDir = os.path.join(attachmentsDir, s + "-team" + str(int(latestTeam[-1:]) + 1))
 
                 # Create the team folder if it doesn't exist and the captain hasn't created a team before, and save all attachments         

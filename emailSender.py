@@ -8,7 +8,7 @@ import colorama
 from colorama import Fore, Back, Style
 from emailTeamParser import EXCEL_NAME
 
-# Mail inputs
+# Mail inputs<
 MAIL_SUBJECT = "Candidature bien reçue!"
 
 def mailHTMLBodyBuilder(firstName, lastName):
