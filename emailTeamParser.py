@@ -51,7 +51,7 @@ def EmailGetterSaver():
 
             try:
                 s = message.subject.lower()
-                teamDir = os.path.join(attachmentsDir, s + "-team" + str(int(latestTeam[-1:]) + 1))
+                teamDir = os.path.join(attachmentsDir, s + "-team" + str(int(latestTeam.split("team",1)[1]) + 1))
 
                 # Create the team folder if it doesn't exist and the captain hasn't created a team before, and save all attachments         
                 if not s in map(lambda team : os.path.basename(team)[:os.path.basename(team).find("-")], listOfTeams):
@@ -61,7 +61,7 @@ def EmailGetterSaver():
                         if key == "receivedTime":
                             message_dict[key] = str(getattr(message, key.capitalize())).rstrip("+00:00").strip()
                         elif key == "team":
-                            message_dict[key] = str(int(latestTeam[-1:]) + 1)
+                            message_dict[key] = str(int(latestTeam.split("team",1)[1]) + 1)
                         else:
                             message_dict[key] = getattr(message, key.capitalize())
                     messages_list.append(message_dict)

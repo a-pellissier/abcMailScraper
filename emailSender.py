@@ -15,7 +15,8 @@ def mailHTMLBodyBuilder(firstName, lastName):
     customBody = f"""<h3>Bonjour {firstName} {lastName},</h3>
 
 Merci pour votre candidature à la <b>Accuracy Business Cup</b>.<br>
-Elle a bien été reçue et nous reviendrons vers vous dans les plus brefs délais"""
+Elle a bien été reçue et nous reviendrons vers vous dans les plus brefs délais. <br>
+Retrouvez les dates de la compétion sur le <a href=https://abc.accuracy.com/how-does-it-work/>site dédié</a> ainsi que des informations sur les éditions précédentes !"""
     return customBody
 
 colorama.init(autoreset=True)
