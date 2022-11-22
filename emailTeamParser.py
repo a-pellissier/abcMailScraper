@@ -2,7 +2,7 @@ import win32com.client
 import os
 import glob
 import dateutil.parser
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import openpyxl
 import colorama
 from colorama import Fore, Back, Style
@@ -18,18 +18,23 @@ def EmailGetterSaver():
     mapi = outlook.GetNamespace("MAPI")
 
     # Connecting to the right inbox
-    inbox = mapi.Folders("Accuracy Business Cup France").Folders("Inbox")
+    inbox = mapi.Folders("Accuracy Business Cup").Folders("Inbox")
 
     # Building the message list of all messages sent by the applying server
+    messages = inbox.Items
+    received_dt = date(2022, 10, 1)
+    received_dt = received_dt.strftime('%m/%d/%Y %H:%M %p')
+    messages = messages.Restrict("[ReceivedTime] >= '" + received_dt + "'")
+
     standardMessages = []
-    for message in inbox.Items:
+    for message in messages:
         if message.Class == 43:
             if message.SenderEmailType == 'EX':
                 if STANDARD_EMAIL_SENDER_ADDRESS == message.Sender.GetExchangeUser().PrimarySmtpAddress:
-                    standardMessages.append(message)
+                    standardMessages.insert(0, message)
             else:
                 if STANDARD_EMAIL_SENDER_ADDRESS == message.SenderEmailAddress:
-                    standardMessages.append(message)
+                    standardMessages.insert(0, message)
 
     # Save attachments and create team folders
     ## Create the teams directory if not already there
@@ -41,7 +46,7 @@ def EmailGetterSaver():
     ## Iterate over the messages
     messages_list = []
     try:
-        for message in list(standardMessages):
+        for message in standardMessages:
             # Get the latest team folder name
             listOfTeams = glob.glob(os.path.join(attachmentsDir, "*"))
             try:    
@@ -50,20 +55,21 @@ def EmailGetterSaver():
                 latestTeam = "team0"
 
             try:
+                country = str(message.Recipients[0]).split(" ")[-1]
                 s = message.subject.lower()
-                teamDir = os.path.join(attachmentsDir, s + "-team" + str(int(latestTeam.split("team",1)[1]) + 1))
+                teamDir = os.path.join(
+                    attachmentsDir,
+                    country + "_" + s + "-team" + str(int(latestTeam.split("team",1)[1]) + 1)
+                )
 
                 # Create the team folder if it doesn't exist and the captain hasn't created a team before, and save all attachments         
-                if not s in map(lambda team : os.path.basename(team)[:os.path.basename(team).find("-")], listOfTeams):
+                if not country + "_" + s in map(lambda team : os.path.basename(team)[:os.path.basename(team).find("-team")], listOfTeams):
                     # Build the dictionnary with this message's info to be sent
-                    message_dict = dict.fromkeys(["receivedTime", "team", "body"])
-                    for key in message_dict.keys():
-                        if key == "receivedTime":
-                            message_dict[key] = str(getattr(message, key.capitalize())).rstrip("+00:00").strip()
-                        elif key == "team":
-                            message_dict[key] = str(int(latestTeam.split("team",1)[1]) + 1)
-                        else:
-                            message_dict[key] = getattr(message, key.capitalize())
+                    message_dict = dict.fromkeys(["receivedTime", "team", "body", "country"])
+                    message_dict["receivedTime"] = str(message.ReceivedTime).rstrip("+00:00").strip()
+                    message_dict["team"] = str(int(latestTeam.split("team",1)[1]) + 1)
+                    message_dict["country"] = country
+                    message_dict["body"] = message.Body
                     messages_list.append(message_dict)
 
                     if not os.path.isdir(teamDir):
@@ -76,11 +82,10 @@ def EmailGetterSaver():
                             print(f"Attachment {attachment.FileName} from captain {s} saved")
                 else:
                     print(Fore.YELLOW + f"Captain {s} has already created a team")
-
             except Exception as e:
                 print(Fore.RED + "Error when saving the attachment:" + str(e))
     except Exception as e:
-            print(Fore.RED + "Error when processing emails messages:" + str(e))
+        print(Fore.RED + "Error when processing emails messages:" + str(e))
 
     return messages_list
 
@@ -90,7 +95,7 @@ def messagesListParser(messages_list):
     if not os.path.exists(path):
         print(Fore.GREEN + "\nCandidates excel doesn't exist, creating it")
         workbook = openpyxl.Workbook()
-        headers = ("Team", "First Name", "Last Name", "email", "School", "Email Sent?")
+        headers = ("Country", "Team", "First Name", "Last Name", "email", "School", "Email Sent?")
         sheet = workbook.active
         sheet.append(headers)
         workbook.save(filename=EXCEL_NAME)
@@ -100,6 +105,7 @@ def messagesListParser(messages_list):
     # Parse each message for team info
     for i, message in enumerate(messages_list):    
         team = message["team"]
+        country = message["country"]
         #print(team)
         candidateList = message["body"].split("CANDIDATE")[1:]
         for candidate in candidateList:
@@ -128,7 +134,7 @@ def messagesListParser(messages_list):
             #print(school, " ", len(school))
 
             # Append data to excel
-            candidateData = (team, firstName, lastName, email, school, 0)
+            candidateData = (country, team, firstName, lastName, email, school, 0)
             sheet.append(candidateData)
     candidates_wb.save(EXCEL_NAME)
     return None
