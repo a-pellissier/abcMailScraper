@@ -35,7 +35,7 @@ def emailSender():
     listOfMails = []
     for row in sheet.rows:
         if row[5].value == 0:
-            mail=outlook.CreateItem(0)
+            mail = outlook.CreateItem(0)
             mail.To = row[3].value
             mail.Subject = MAIL_SUBJECT
             mail.HTMLBody = mailHTMLBodyBuilder(row[1].value, row[2].value)
